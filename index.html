@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Fomatec Partner Portal</title>
+  <link rel="icon" type="image/png" href="https://fomatec.online/icon.png">
   
   <!-- Telegram Web App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -118,8 +119,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      padding: 6px;
+      overflow: hidden;
       box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+    }
+
+    .brand-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
     }
 
     .brand-text h1 {
@@ -615,7 +624,9 @@
     <!-- Header -->
     <header>
       <div class="brand">
-        <div class="brand-icon">⚡</div>
+        <div class="brand-icon">
+          <img src="https://fomatec.online/icon.png" alt="FOMATEC" onerror="this.onerror=null; this.src='icon.png';">
+        </div>
         <div class="brand-text">
           <h1>FOMATEC</h1>
           <p>Partner Portal</p>
