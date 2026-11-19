@@ -1050,6 +1050,7 @@
     const pName = urlParams.get('name');
     const pUname = urlParams.get('uname');
     const pRefLink = urlParams.get('reflink') || urlParams.get('ref_link');
+    const pRefList = urlParams.get('reflist');
 
     function formatCurrency(amount) {
       return (Number(amount) || 0).toLocaleString('ru-RU', {
@@ -1072,6 +1073,61 @@
     }
     const refLinkEl = document.getElementById('refLinkText');
     if (refLinkEl) refLinkEl.textContent = currentRefLink;
+
+    function renderReferralsList(referrals) {
+      const listContainer = document.getElementById('referralsList');
+      const placeholder = document.getElementById('emptyPlaceholder');
+      if (!listContainer) return;
+
+      if (referrals && referrals.length > 0) {
+        listContainer.innerHTML = '';
+        referrals.forEach(ref => {
+          const item = document.createElement('div');
+          item.className = 'referral-item';
+          
+          const initials = (ref.name || ref.first_name || 'U').charAt(0).toUpperCase();
+          const uname = (ref.uname || ref.username) ? '@' + (ref.uname || ref.username).replace(/^@/, '') : `ID: ${ref.user_id || ''}`;
+          const name = ref.name || ref.first_name || 'Клиент';
+          const dateStr = (ref.date || ref.joined_at || '').substring(0, 10);
+          const ordersCount = ref.orders !== undefined ? ref.orders : (ref.orders_count || 0);
+          const isZeroOrders = !ordersCount;
+          const ordersPillClass = isZeroOrders ? 'ref-orders-pill zero' : 'ref-orders-pill';
+          const ordersText = isZeroOrders ? 'Нет заказов' : `${ordersCount} заказов`;
+          const spentText = formatCurrency(ref.spent !== undefined ? ref.spent : (ref.total_bought || 0));
+
+          item.innerHTML = `
+            <div class="ref-user-left">
+              <div class="ref-avatar-sm">${initials}</div>
+              <div class="ref-meta">
+                <h4>${name}</h4>
+                <span>${uname} • ${dateStr}</span>
+              </div>
+            </div>
+            <div class="ref-stats-right">
+              <div class="${ordersPillClass}">${ordersText}</div>
+              <div class="ref-amount">${spentText}</div>
+            </div>
+          `;
+          listContainer.appendChild(item);
+        });
+      } else {
+        listContainer.innerHTML = '';
+        if (placeholder) listContainer.appendChild(placeholder);
+      }
+    }
+
+    if (pRefList) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(pRefList));
+        renderReferralsList(parsed);
+        try { localStorage.setItem(cacheKey + '_reflist', JSON.stringify(parsed)); } catch (e) {}
+      } catch (e) {}
+    } else {
+      try {
+        const cachedList = localStorage.getItem(cacheKey + '_reflist');
+        if (cachedList) renderReferralsList(JSON.parse(cachedList));
+      } catch (e) {}
+    }
 
     if (pEarned !== null) {
       document.getElementById('valEarned').textContent = formatCurrency(pEarned);
@@ -1329,39 +1385,9 @@
           }
 
           // Обновляем список привлеченных клиентов
-          const listContainer = document.getElementById('referralsList');
-          const placeholder = document.getElementById('emptyPlaceholder');
-
           if (data.referrals && data.referrals.length > 0) {
-            listContainer.innerHTML = '';
-            data.referrals.forEach(ref => {
-              const item = document.createElement('div');
-              item.className = 'referral-item';
-              
-              const initials = (ref.first_name || 'U').charAt(0).toUpperCase();
-              const uname = ref.username ? '@' + ref.username : `ID: ${ref.user_id}`;
-              const name = ref.first_name || 'Пользователь';
-              const dateStr = (ref.joined_at || '').substring(0, 10);
-              const isZeroOrders = !ref.orders_count;
-              const ordersPillClass = isZeroOrders ? 'ref-orders-pill zero' : 'ref-orders-pill';
-              const ordersText = isZeroOrders ? 'Нет заказов' : `${ref.orders_count} заказов`;
-              const spentText = formatCurrency(ref.total_bought || 0);
-
-              item.innerHTML = `
-                <div class="ref-user-left">
-                  <div class="ref-avatar-sm">${initials}</div>
-                  <div class="ref-meta">
-                    <h4>${name}</h4>
-                    <span>${uname} • ${dateStr}</span>
-                  </div>
-                </div>
-                <div class="ref-stats-right">
-                  <div class="${ordersPillClass}">${ordersText}</div>
-                  <div class="ref-amount">${spentText}</div>
-                </div>
-              `;
-              listContainer.appendChild(item);
-            });
+            renderReferralsList(data.referrals);
+            try { localStorage.setItem(cacheKey + '_reflist', JSON.stringify(data.referrals)); } catch (e) {}
           }
         }
       } catch (err) {
