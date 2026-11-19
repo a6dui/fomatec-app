@@ -756,7 +756,7 @@
       } catch (e) {}
     }
 
-    // Определение user_id
+    // Определение параметров из URL для мгновенной загрузки
     const urlParams = new URLSearchParams(window.location.search);
     let userId = urlParams.get('user_id');
 
@@ -771,14 +771,36 @@
       document.getElementById('userAvatar').textContent = (u.first_name || 'F').charAt(0).toUpperCase();
     }
 
-    let currentRefLink = `https://t.me/Fomatec_bot?start=ref_${userId || '1'}`;
-    document.getElementById('refLinkText').textContent = currentRefLink;
+    // Мгновенная инициализация из переданных ботом параметров
+    const pEarned = urlParams.get('earned');
+    const pRate = urlParams.get('rate');
+    const pTurnover = urlParams.get('turnover');
+    const pRefs = urlParams.get('refs');
+    const pOrders = urlParams.get('orders');
+    const pName = urlParams.get('name');
+    const pUname = urlParams.get('uname');
 
     function formatCurrency(amount) {
       return (Number(amount) || 0).toLocaleString('ru-RU', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       }) + ' ₽';
+    }
+
+    if (pEarned !== null) document.getElementById('valEarned').textContent = formatCurrency(pEarned);
+    if (pRate !== null) document.getElementById('valRate').textContent = parseFloat(pRate).toFixed(1) + '%';
+    if (pTurnover !== null) document.getElementById('valTurnover').textContent = formatCurrency(pTurnover);
+    if (pRefs !== null) {
+      document.getElementById('valReferrals').textContent = pRefs;
+      document.getElementById('badgeCount').textContent = pRefs + ' чел.';
+    }
+    if (pOrders !== null) document.getElementById('valOrders').textContent = pOrders;
+    if (pName) {
+      document.getElementById('userName').textContent = pName;
+      document.getElementById('userAvatar').textContent = pName.charAt(0).toUpperCase();
+    }
+    if (pUname) {
+      document.getElementById('userHandle').textContent = '@' + pUname.replace(/^@/, '');
     }
 
     function showToast(text) {
