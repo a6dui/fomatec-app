@@ -1032,7 +1032,7 @@
       document.getElementById('userAvatar').textContent = (u.first_name || 'F').charAt(0).toUpperCase();
     }
 
-    // Мгновенная инициализация из переданных ботом параметров
+    // Мгновенная инициализация из переданных ботом параметров или кэша
     const pEarned = urlParams.get('earned');
     const pRefs = urlParams.get('refs');
     const pOrders = urlParams.get('orders');
@@ -1047,22 +1047,77 @@
       }) + ' ₽';
     }
 
-    if (pEarned !== null) document.getElementById('valEarned').textContent = formatCurrency(pEarned);
+    const cacheKey = 'fomatec_u_' + (userId || 'me');
+
+    if (pEarned !== null) {
+      document.getElementById('valEarned').textContent = formatCurrency(pEarned);
+      try { localStorage.setItem(cacheKey + '_earned', pEarned); } catch (e) {}
+    } else {
+      try {
+        const cEarned = localStorage.getItem(cacheKey + '_earned');
+        if (cEarned !== null) document.getElementById('valEarned').textContent = formatCurrency(cEarned);
+      } catch (e) {}
+    }
+
     if (pRefs !== null) {
       document.getElementById('valReferrals').textContent = pRefs;
       document.getElementById('badgeCount').textContent = pRefs + ' чел.';
+      try { localStorage.setItem(cacheKey + '_refs', pRefs); } catch (e) {}
+    } else {
+      try {
+        const cRefs = localStorage.getItem(cacheKey + '_refs');
+        if (cRefs !== null) {
+          document.getElementById('valReferrals').textContent = cRefs;
+          document.getElementById('badgeCount').textContent = cRefs + ' чел.';
+        }
+      } catch (e) {}
     }
-    if (pOrders !== null) document.getElementById('valOrders').textContent = pOrders + ' шт.';
+
+    if (pOrders !== null) {
+      document.getElementById('valOrders').textContent = pOrders + ' шт.';
+      try { localStorage.setItem(cacheKey + '_orders', pOrders); } catch (e) {}
+    } else {
+      try {
+        const cOrders = localStorage.getItem(cacheKey + '_orders');
+        if (cOrders !== null) document.getElementById('valOrders').textContent = cOrders + ' шт.';
+      } catch (e) {}
+    }
+
     if (pRate !== null) {
-      const numRate = parseFloat(pRate) || 10.0;
+      const numRate = parseFloat(pRate) || 25.0;
       document.getElementById('valRate').textContent = numRate.toFixed(1) + '%';
+      try { localStorage.setItem(cacheKey + '_rate', numRate.toFixed(1)); } catch (e) {}
+    } else {
+      try {
+        const cRate = localStorage.getItem(cacheKey + '_rate');
+        if (cRate !== null) {
+          document.getElementById('valRate').textContent = parseFloat(cRate).toFixed(1) + '%';
+        }
+      } catch (e) {}
     }
+
     if (pName) {
       document.getElementById('userName').textContent = pName;
       document.getElementById('userAvatar').textContent = pName.charAt(0).toUpperCase();
+      try { localStorage.setItem(cacheKey + '_name', pName); } catch (e) {}
+    } else {
+      try {
+        const cName = localStorage.getItem(cacheKey + '_name');
+        if (cName) {
+          document.getElementById('userName').textContent = cName;
+          document.getElementById('userAvatar').textContent = cName.charAt(0).toUpperCase();
+        }
+      } catch (e) {}
     }
+
     if (pUname) {
       document.getElementById('userHandle').textContent = '@' + pUname.replace(/^@/, '');
+      try { localStorage.setItem(cacheKey + '_uname', pUname); } catch (e) {}
+    } else {
+      try {
+        const cUname = localStorage.getItem(cacheKey + '_uname');
+        if (cUname) document.getElementById('userHandle').textContent = '@' + cUname.replace(/^@/, '');
+      } catch (e) {}
     }
 
     // Админ-режим (если открыл администратор)
