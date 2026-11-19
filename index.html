@@ -665,7 +665,7 @@
 
     <!-- Metrics Bento Grid -->
     <div class="section-title">
-      <span>📊 Аналитика и доход</span>
+      <span>📊 Ваша статистика</span>
     </div>
 
     <div class="grid-metrics">
@@ -676,47 +676,27 @@
           <div class="metric-icon icon-emerald">💵</div>
         </div>
         <div class="metric-value" id="valEarned">0.00 ₽</div>
-        <div class="metric-sub">Вознаграждение за все успешные покупки клиентов</div>
-      </div>
-
-      <!-- Commission Rate Card -->
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">Ваша ставка</span>
-          <div class="metric-icon icon-cyan">📈</div>
-        </div>
-        <div class="metric-value" id="valRate">10.0%</div>
-        <div class="metric-sub">С каждой покупки</div>
-      </div>
-
-      <!-- Turnover Card -->
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">Товарооборот</span>
-          <div class="metric-icon icon-purple">💰</div>
-        </div>
-        <div class="metric-value" id="valTurnover">0.00 ₽</div>
-        <div class="metric-sub">Сумма всех покупок</div>
+        <div class="metric-sub">Ваш чистый доход с покупок по реферальной ссылке</div>
       </div>
 
       <!-- Referrals Count Card -->
       <div class="metric-card">
         <div class="metric-header">
-          <span class="metric-title">Переходы</span>
+          <span class="metric-title">Пришло человек</span>
           <div class="metric-icon icon-cyan">👥</div>
         </div>
         <div class="metric-value" id="valReferrals">0</div>
-        <div class="metric-sub">Привлечено людей</div>
+        <div class="metric-sub">Переходов по вашей рефке</div>
       </div>
 
       <!-- Purchases Count Card -->
       <div class="metric-card">
         <div class="metric-header">
-          <span class="metric-title">Покупок</span>
+          <span class="metric-title">Купили товара</span>
           <div class="metric-icon icon-emerald">🛒</div>
         </div>
-        <div class="metric-value" id="valOrders">0</div>
-        <div class="metric-sub">Оплаченных заказов</div>
+        <div class="metric-value" id="valOrders">0 шт.</div>
+        <div class="metric-sub">Успешных покупок по рефке</div>
       </div>
     </div>
 
@@ -773,8 +753,6 @@
 
     // Мгновенная инициализация из переданных ботом параметров
     const pEarned = urlParams.get('earned');
-    const pRate = urlParams.get('rate');
-    const pTurnover = urlParams.get('turnover');
     const pRefs = urlParams.get('refs');
     const pOrders = urlParams.get('orders');
     const pName = urlParams.get('name');
@@ -788,13 +766,11 @@
     }
 
     if (pEarned !== null) document.getElementById('valEarned').textContent = formatCurrency(pEarned);
-    if (pRate !== null) document.getElementById('valRate').textContent = parseFloat(pRate).toFixed(1) + '%';
-    if (pTurnover !== null) document.getElementById('valTurnover').textContent = formatCurrency(pTurnover);
     if (pRefs !== null) {
       document.getElementById('valReferrals').textContent = pRefs;
       document.getElementById('badgeCount').textContent = pRefs + ' чел.';
     }
-    if (pOrders !== null) document.getElementById('valOrders').textContent = pOrders;
+    if (pOrders !== null) document.getElementById('valOrders').textContent = pOrders + ' шт.';
     if (pName) {
       document.getElementById('userName').textContent = pName;
       document.getElementById('userAvatar').textContent = pName.charAt(0).toUpperCase();
@@ -857,10 +833,8 @@
 
         // Обновляем метрики
         document.getElementById('valEarned').textContent = formatCurrency(data.total_earned);
-        document.getElementById('valRate').textContent = (data.commission_rate || 10).toFixed(1) + '%';
-        document.getElementById('valTurnover').textContent = formatCurrency(data.total_turnover);
         document.getElementById('valReferrals').textContent = data.total_referrals || 0;
-        document.getElementById('valOrders').textContent = data.orders_count || 0;
+        document.getElementById('valOrders').textContent = (data.orders_count || 0) + ' шт.';
         document.getElementById('badgeCount').textContent = `${data.total_referrals || 0} чел.`;
 
         // Обновляем ссылку
