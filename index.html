@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Fomatec Partner Portal</title>
+  
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Google Fonts: Outfit, Plus Jakarta Sans, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      /* Fomatec-Pharm Clinical Bio-Medical Dark Theme Tokens */
+      --background: #090b0e;
+      --foreground: #f1f3f7;
+      --muted: #94a3b8;
+      
+      --primary: #10b981;
+      --primary-light: #34d399;
+      --primary-dark: #059669;
+
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+
+      --surface: rgba(14, 18, 25, 0.85);
+      --surface-card: rgba(18, 24, 34, 0.75);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-active: rgba(16, 185, 129, 0.4);
+
+      --gradient-primary: linear-gradient(135deg, #ffffff 0%, #a7f3d0 45%, #10b981 100%);
+      --gradient-emerald: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --gradient-cyan: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%);
+      --gradient-card: linear-gradient(180deg, rgba(16, 22, 32, 0.85) 0%, rgba(10, 14, 20, 0.95) 100%);
+
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-display: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-bottom: 40px;
+      position: relative;
+    }
+
+    /* Ambient Lighting Meshes */
+    body::before {
+      content: "";
+      position: fixed;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.18), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      bottom: -150px;
+      right: -100px;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle at center, rgba(6, 182, 212, 0.12), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 540px;
+      margin: 0 auto;
+      padding: 16px 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header & Navigation */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
+      border: 1px solid var(--border-active);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+    }
+
+    .brand-text h1 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.1;
+    }
+
+    .brand-text p {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--primary-light);
+      font-family: var(--font-mono);
+    }
+
+    .status-pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      box-shadow: 0 0 10px var(--primary);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* User Profile Bar */
+    .user-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 15px;
+      color: #090b0e;
+    }
+
+    .user-details h3 {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .user-details span {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+
+    .refresh-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--foreground);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .refresh-btn:hover, .refresh-btn:active {
+      border-color: var(--border-active);
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--primary-light);
+    }
+
+    /* Referral Link Hero Box */
+    .ref-box {
+      background: var(--gradient-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-active);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 25px rgba(16, 185, 129, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ref-box::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #10b981, #06b6d4, transparent);
+    }
+
+    .ref-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--primary-light);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ref-input-group {
+      background: rgba(9, 11, 14, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .ref-link-text {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #cbd5e1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: all;
+    }
+
+    .ref-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      border: none;
+      outline: none;
+    }
+
+    .btn-primary {
+      background: var(--gradient-emerald);
+      color: #090b0e;
+      font-weight: 700;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--foreground);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:active {
+      transform: scale(0.98);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Metrics Grid */
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .grid-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .metric-card {
+      background: var(--surface-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .metric-card.featured {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(16, 24, 34, 0.95), rgba(12, 16, 24, 0.95));
+      border-color: rgba(16, 185, 129, 0.35);
+      box-shadow: 0 8px 24px -6px rgba(16, 185, 129, 0.15);
+    }
+
+    .metric-card.featured::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 150px;
+      height: 100%;
+      background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 70%);
+      pointer-events: none;
+    }
+
+    .metric-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .metric-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .icon-emerald {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .icon-cyan {
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+    }
+
+    .icon-purple {
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+    }
+
+    .metric-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .metric-value {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--foreground);
+      margin-top: 4px;
+    }
+
+    .metric-card.featured .metric-value {
+      font-size: 30px;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .metric-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* Referrals List */
+    .referrals-box {
+      background: var(--surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .badge-count {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: 12px;
+      color: var(--foreground);
+    }
+
+    .referrals-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .referral-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      transition: background 0.2s;
+    }
+
+    .referral-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .ref-user-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ref-avatar-sm {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary-light);
+    }
+
+    .ref-meta h4 {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .ref-meta span {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+
+    .ref-stats-right {
+      text-align: right;
+    }
+
+    .ref-orders-pill {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 8px;
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--primary-light);
+      margin-bottom: 2px;
+    }
+
+    .ref-orders-pill.zero {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+    }
+
+    .ref-amount {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--muted);
+    }
+
+    .empty-icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+      opacity: 0.6;
+    }
+
+    .empty-state h4 {
+      font-size: 15px;
+      color: var(--foreground);
+      margin-bottom: 6px;
+    }
+
+    .empty-state p {
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(14, 18, 25, 0.95);
+      border: 1px solid var(--border-active);
+      color: var(--foreground);
+      padding: 12px 22px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(16, 185, 129, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 100;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast-check {
+      color: var(--primary-light);
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-text">
+          <h1>FOMATEC</h1>
+          <p>Partner Portal</p>
+        </div>
+      </div>
+      <div class="header-status">
+        <div class="status-pulse"></div>
+        <span>LIVE</span>
+      </div>
+    </header>
+
+    <!-- User Profile Bar -->
+    <div class="user-card">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">FP</div>
+        <div class="user-details">
+          <h3 id="userName">Партнёр Fomatec</h3>
+          <span id="userHandle">@partner</span>
+        </div>
+      </div>
+      <button class="refresh-btn" id="refreshBtn" onclick="fetchData()">
+        <span>🔄</span>
+        <span>Обновить</span>
+      </button>
+    </div>
+
+    <!-- Referral Link Box -->
+    <div class="ref-box">
+      <div class="ref-label">
+        <span>🔗</span>
+        <span>Ваша реферальная ссылка</span>
+      </div>
+      <div class="ref-input-group">
+        <span class="ref-link-text" id="refLinkText">https://t.me/Fomatec_bot?start=ref_...</span>
+      </div>
+      <div class="ref-actions">
+        <button class="btn btn-primary" onclick="copyRefLink()">
+          <span>📋</span>
+          <span>Скопировать</span>
+        </button>
+        <button class="btn btn-secondary" onclick="shareRefLink()">
+          <span>↗️</span>
+          <span>Поделиться</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Metrics Bento Grid -->
+    <div class="section-title">
+      <span>📊 Аналитика и доход</span>
+    </div>
+
+    <div class="grid-metrics">
+      <!-- Big Earned Card -->
+      <div class="metric-card featured">
+        <div class="metric-header">
+          <span class="metric-title">Всего заработано</span>
+          <div class="metric-icon icon-emerald">💵</div>
+        </div>
+        <div class="metric-value" id="valEarned">0.00 ₽</div>
+        <div class="metric-sub">Вознаграждение за все успешные покупки клиентов</div>
+      </div>
+
+      <!-- Commission Rate Card -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">Ваша ставка</span>
+          <div class="metric-icon icon-cyan">📈</div>
+        </div>
+        <div class="metric-value" id="valRate">10.0%</div>
+        <div class="metric-sub">С каждой покупки</div>
+      </div>
+
+      <!-- Turnover Card -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">Товарооборот</span>
+          <div class="metric-icon icon-purple">💰</div>
+        </div>
+        <div class="metric-value" id="valTurnover">0.00 ₽</div>
+        <div class="metric-sub">Сумма всех покупок</div>
+      </div>
+
+      <!-- Referrals Count Card -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">Переходы</span>
+          <div class="metric-icon icon-cyan">👥</div>
+        </div>
+        <div class="metric-value" id="valReferrals">0</div>
+        <div class="metric-sub">Привлечено людей</div>
+      </div>
+
+      <!-- Purchases Count Card -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">Покупок</span>
+          <div class="metric-icon icon-emerald">🛒</div>
+        </div>
+        <div class="metric-value" id="valOrders">0</div>
+        <div class="metric-sub">Оплаченных заказов</div>
+      </div>
+    </div>
+
+    <!-- Referral Customers Section -->
+    <div class="referrals-box">
+      <div class="section-title" style="margin-bottom: 0;">
+        <span>👥 Привлеченные клиенты</span>
+        <span class="badge-count" id="badgeCount">0 чел.</span>
+      </div>
+
+      <div class="referrals-list" id="referralsList">
+        <!-- Loader / Empty placeholder -->
+        <div class="empty-state" id="emptyPlaceholder">
+          <div class="empty-icon">👥</div>
+          <h4>Пока нет клиентов</h4>
+          <p>Поделитесь своей реферальной ссылкой, чтобы пригласить первых покупателей и начать зарабатывать!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <span class="toast-check">✓</span>
+    <span id="toastText">Ссылка скопирована в буфер!</span>
+  </div>
+
+  <script>
+    // Инициализация Telegram WebApp
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      try {
+        tg.setHeaderColor('#090b0e');
+        tg.setBackgroundColor('#090b0e');
+      } catch (e) {}
+    }
+
+    // Определение user_id
+    const urlParams = new URLSearchParams(window.location.search);
+    let userId = urlParams.get('user_id');
+
+    if (!userId && tg?.initDataUnsafe?.user?.id) {
+      userId = tg.initDataUnsafe.user.id;
+    }
+
+    if (tg?.initDataUnsafe?.user) {
+      const u = tg.initDataUnsafe.user;
+      document.getElementById('userName').textContent = (u.first_name || '') + ' ' + (u.last_name || '');
+      document.getElementById('userHandle').textContent = u.username ? '@' + u.username : `ID: ${u.id}`;
+      document.getElementById('userAvatar').textContent = (u.first_name || 'F').charAt(0).toUpperCase();
+    }
+
+    let currentRefLink = `https://t.me/Fomatec_bot?start=ref_${userId || '1'}`;
+    document.getElementById('refLinkText').textContent = currentRefLink;
+
+    function formatCurrency(amount) {
+      return (Number(amount) || 0).toLocaleString('ru-RU', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }) + ' ₽';
+    }
+
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastText').textContent = text;
+      toast.classList.add('show');
+      if (tg?.HapticFeedback) {
+        tg.HapticFeedback.notificationOccurred('success');
+      }
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    function copyRefLink() {
+      navigator.clipboard.writeText(currentRefLink).then(() => {
+        showToast('Ссылка скопирована!');
+      }).catch(() => {
+        // Fallback
+        const input = document.createElement('input');
+        input.value = currentRefLink;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        showToast('Ссылка скопирована!');
+      });
+    }
+
+    function shareRefLink() {
+      if (tg?.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('medium');
+      }
+      const shareText = encodeURIComponent('Рекомендую Fomatec! Переходи по ссылке и выбирай лучшее оборудование:');
+      const shareUrl = encodeURIComponent(currentRefLink);
+      const tgShare = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
+      
+      if (tg?.openTelegramLink) {
+        tg.openTelegramLink(tgShare);
+      } else {
+        window.open(tgShare, '_blank');
+      }
+    }
+
+    async function fetchData() {
+      const btn = document.getElementById('refreshBtn');
+      btn.style.opacity = '0.6';
+
+      try {
+        const queryId = userId || '0';
+        const res = await fetch(`/api/stats?user_id=${queryId}`);
+        if (!res.ok) throw new Error('API error');
+        const data = await res.json();
+
+        // Обновляем метрики
+        document.getElementById('valEarned').textContent = formatCurrency(data.total_earned);
+        document.getElementById('valRate').textContent = (data.commission_rate || 10).toFixed(1) + '%';
+        document.getElementById('valTurnover').textContent = formatCurrency(data.total_turnover);
+        document.getElementById('valReferrals').textContent = data.total_referrals || 0;
+        document.getElementById('valOrders').textContent = data.orders_count || 0;
+        document.getElementById('badgeCount').textContent = `${data.total_referrals || 0} чел.`;
+
+        // Обновляем ссылку
+        currentRefLink = `https://t.me/Fomatec_bot?start=ref_${data.user_id || userId}`;
+        document.getElementById('refLinkText').textContent = currentRefLink;
+
+        if (data.username) {
+          document.getElementById('userHandle').textContent = '@' + data.username;
+        }
+        if (data.first_name) {
+          document.getElementById('userName').textContent = data.first_name;
+          document.getElementById('userAvatar').textContent = data.first_name.charAt(0).toUpperCase();
+        }
+
+        // Обновляем список привлеченных клиентов
+        const listContainer = document.getElementById('referralsList');
+        const placeholder = document.getElementById('emptyPlaceholder');
+
+        if (data.referrals && data.referrals.length > 0) {
+          listContainer.innerHTML = '';
+          data.referrals.forEach(ref => {
+            const item = document.createElement('div');
+            item.className = 'referral-item';
+            
+            const initials = (ref.first_name || 'U').charAt(0).toUpperCase();
+            const uname = ref.username ? '@' + ref.username : `ID: ${ref.user_id}`;
+            const name = ref.first_name || 'Пользователь';
+            const dateStr = (ref.joined_at || '').substring(0, 10);
+            const isZeroOrders = !ref.orders_count;
+            const ordersPillClass = isZeroOrders ? 'ref-orders-pill zero' : 'ref-orders-pill';
+            const ordersText = isZeroOrders ? 'Нет заказов' : `${ref.orders_count} заказов`;
+            const spentText = formatCurrency(ref.total_bought || 0);
+
+            item.innerHTML = `
+              <div class="ref-user-left">
+                <div class="ref-avatar-sm">${initials}</div>
+                <div class="ref-meta">
+                  <h4>${name}</h4>
+                  <span>${uname} • ${dateStr}</span>
+                </div>
+              </div>
+              <div class="ref-stats-right">
+                <div class="${ordersPillClass}">${ordersText}</div>
+                <div class="ref-amount">${spentText}</div>
+              </div>
+            `;
+            listContainer.appendChild(item);
+          });
+        } else {
+          listContainer.innerHTML = '';
+          listContainer.appendChild(placeholder);
+        }
+
+        if (tg?.HapticFeedback) {
+          tg.HapticFeedback.impactOccurred('light');
+        }
+      } catch (err) {
+        console.warn('Could not load stats from API:', err);
+      } finally {
+        btn.style.opacity = '1';
+      }
+    }
+
+    // Первый вызов
+    fetchData();
+  </script>
+</body>
+</html>
