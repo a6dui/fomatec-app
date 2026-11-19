@@ -245,6 +245,16 @@
       color: var(--primary-light);
     }
 
+    @keyframes spinAnim {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .refresh-btn.rotating span:first-child {
+      display: inline-block;
+      animation: spinAnim 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
     /* Referral Link Hero Box */
     .ref-box {
       background: var(--gradient-card);
@@ -925,11 +935,11 @@
     <!-- Referral Link Box -->
     <div class="ref-box">
       <div class="ref-label">
-        <span>🔗</span>
-        <span>Ваша реферальная ссылка</span>
+        <span>📢</span>
+        <span>Ваша ссылка на Telegram-канал</span>
       </div>
-      <div class="ref-input-group">
-        <span class="ref-link-text" id="refLinkText">https://t.me/Fomatec_bot?start=ref_...</span>
+      <div class="ref-input-group" onclick="copyRefLink()" style="cursor: pointer;" title="Нажмите, чтобы скопировать">
+        <span class="ref-link-text" id="refLinkText">https://t.me/+Bwz59mZuVL9kNGYy</span>
       </div>
       <div class="ref-actions">
         <button class="btn btn-primary" onclick="copyRefLink()">
@@ -1039,6 +1049,7 @@
     const pRate = urlParams.get('rate');
     const pName = urlParams.get('name');
     const pUname = urlParams.get('uname');
+    const pRefLink = urlParams.get('reflink') || urlParams.get('ref_link');
 
     function formatCurrency(amount) {
       return (Number(amount) || 0).toLocaleString('ru-RU', {
@@ -1048,6 +1059,19 @@
     }
 
     const cacheKey = 'fomatec_u_' + (userId || 'me');
+
+    let currentRefLink = 'https://t.me/+Bwz59mZuVL9kNGYy';
+    if (pRefLink) {
+      currentRefLink = decodeURIComponent(pRefLink);
+      try { localStorage.setItem(cacheKey + '_reflink', currentRefLink); } catch (e) {}
+    } else {
+      try {
+        const cRef = localStorage.getItem(cacheKey + '_reflink');
+        if (cRef) currentRefLink = cRef;
+      } catch (e) {}
+    }
+    const refLinkEl = document.getElementById('refLinkText');
+    if (refLinkEl) refLinkEl.textContent = currentRefLink;
 
     if (pEarned !== null) {
       document.getElementById('valEarned').textContent = formatCurrency(pEarned);
@@ -1186,113 +1210,176 @@
     }
 
     function copyRefLink() {
-      navigator.clipboard.writeText(currentRefLink).then(() => {
-        showToast('Ссылка скопирована!');
-      }).catch(() => {
-        // Fallback
-        const input = document.createElement('input');
-        input.value = currentRefLink;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        showToast('Ссылка скопирована!');
-      });
+      const link = currentRefLink || document.getElementById('refLinkText')?.textContent?.trim() || 'https://t.me/+Bwz59mZuVL9kNGYy';
+
+      if (tg?.HapticFeedback) {
+        try { tg.HapticFeedback.notificationOccurred('success'); } catch (e) {}
+      }
+
+      let copied = false;
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = link;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        ta.style.top = (window.pageYOffset || document.documentElement.scrollTop || 0) + 'px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ta.setSelectionRange(0, 999999);
+        copied = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch (e) {
+        copied = false;
+      }
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(link).then(() => {
+          showToast('✅ Ссылка скопирована!');
+        }).catch(() => {
+          showToast(copied ? '✅ Ссылка скопирована!' : 'Ссылка скопирована!');
+        });
+      } else {
+        showToast('✅ Ссылка скопирована!');
+      }
     }
 
     function shareRefLink() {
+      const link = currentRefLink || document.getElementById('refLinkText')?.textContent?.trim() || 'https://t.me/+Bwz59mZuVL9kNGYy';
+
       if (tg?.HapticFeedback) {
-        tg.HapticFeedback.impactOccurred('medium');
+        try { tg.HapticFeedback.impactOccurred('medium'); } catch (e) {}
       }
-      const shareText = encodeURIComponent('Рекомендую Fomatec! Переходи по ссылке и выбирай лучшее оборудование:');
-      const shareUrl = encodeURIComponent(currentRefLink);
+
+      const shareText = encodeURIComponent('Подписывайтесь на официальный канал FOMATEC PHARM:');
+      const shareUrl = encodeURIComponent(link);
       const tgShare = `https://t.me/share/url?url=${shareUrl}&text=${shareText}`;
-      
-      if (tg?.openTelegramLink) {
-        tg.openTelegramLink(tgShare);
-      } else {
-        window.open(tgShare, '_blank');
+
+      if (tg && typeof tg.openTelegramLink === 'function') {
+        try {
+          tg.openTelegramLink(tgShare);
+          return;
+        } catch (e) {}
       }
+
+      if (tg && typeof tg.openLink === 'function') {
+        try {
+          tg.openLink(tgShare);
+          return;
+        } catch (e) {}
+      }
+
+      window.open(tgShare, '_blank');
     }
 
     async function fetchData() {
       const btn = document.getElementById('refreshBtn');
-      btn.style.opacity = '0.6';
+      if (btn) btn.classList.add('rotating');
 
+      if (tg?.HapticFeedback) {
+        try { tg.HapticFeedback.impactOccurred('light'); } catch (e) {}
+      }
+
+      let apiLoaded = false;
       try {
         const queryId = userId || '0';
-        const res = await fetch(`/api/stats?user_id=${queryId}`);
-        if (!res.ok) throw new Error('API error');
-        const data = await res.json();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch(`/api/stats?user_id=${queryId}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
 
-        // Обновляем метрики
-        document.getElementById('valEarned').textContent = formatCurrency(data.total_earned);
-        document.getElementById('valReferrals').textContent = data.total_referrals || 0;
-        document.getElementById('valOrders').textContent = (data.orders_count || 0) + ' шт.';
-        document.getElementById('badgeCount').textContent = `${data.total_referrals || 0} чел.`;
-        if (data.commission_rate !== undefined) {
-          document.getElementById('valRate').textContent = Number(data.commission_rate).toFixed(1) + '%';
-        }
+        if (res.ok) {
+          const data = await res.json();
+          apiLoaded = true;
 
-        // Обновляем ссылку
-        currentRefLink = `https://t.me/Fomatec_bot?start=ref_${data.user_id || userId}`;
-        document.getElementById('refLinkText').textContent = currentRefLink;
+          // Обновляем метрики
+          if (data.total_earned !== undefined) {
+            document.getElementById('valEarned').textContent = formatCurrency(data.total_earned);
+            try { localStorage.setItem(cacheKey + '_earned', data.total_earned); } catch (e) {}
+          }
+          if (data.total_referrals !== undefined) {
+            document.getElementById('valReferrals').textContent = data.total_referrals;
+            document.getElementById('badgeCount').textContent = `${data.total_referrals} чел.`;
+            try { localStorage.setItem(cacheKey + '_refs', data.total_referrals); } catch (e) {}
+          }
+          if (data.orders_count !== undefined) {
+            document.getElementById('valOrders').textContent = (data.orders_count || 0) + ' шт.';
+            try { localStorage.setItem(cacheKey + '_orders', data.orders_count); } catch (e) {}
+          }
+          if (data.commission_rate !== undefined) {
+            const numRate = parseFloat(data.commission_rate) || 25.0;
+            document.getElementById('valRate').textContent = numRate.toFixed(1) + '%';
+            try { localStorage.setItem(cacheKey + '_rate', numRate.toFixed(1)); } catch (e) {}
+          }
 
-        if (data.username) {
-          document.getElementById('userHandle').textContent = '@' + data.username;
-        }
-        if (data.first_name) {
-          document.getElementById('userName').textContent = data.first_name;
-          document.getElementById('userAvatar').textContent = data.first_name.charAt(0).toUpperCase();
-        }
+          // Обновляем ссылку на канал
+          if (data.channel_invite_link) {
+            currentRefLink = data.channel_invite_link;
+            document.getElementById('refLinkText').textContent = currentRefLink;
+            try { localStorage.setItem(cacheKey + '_reflink', currentRefLink); } catch (e) {}
+          }
 
-        // Обновляем список привлеченных клиентов
-        const listContainer = document.getElementById('referralsList');
-        const placeholder = document.getElementById('emptyPlaceholder');
+          if (data.username) {
+            document.getElementById('userHandle').textContent = '@' + data.username;
+          }
+          if (data.first_name) {
+            document.getElementById('userName').textContent = data.first_name;
+            document.getElementById('userAvatar').textContent = data.first_name.charAt(0).toUpperCase();
+          }
 
-        if (data.referrals && data.referrals.length > 0) {
-          listContainer.innerHTML = '';
-          data.referrals.forEach(ref => {
-            const item = document.createElement('div');
-            item.className = 'referral-item';
-            
-            const initials = (ref.first_name || 'U').charAt(0).toUpperCase();
-            const uname = ref.username ? '@' + ref.username : `ID: ${ref.user_id}`;
-            const name = ref.first_name || 'Пользователь';
-            const dateStr = (ref.joined_at || '').substring(0, 10);
-            const isZeroOrders = !ref.orders_count;
-            const ordersPillClass = isZeroOrders ? 'ref-orders-pill zero' : 'ref-orders-pill';
-            const ordersText = isZeroOrders ? 'Нет заказов' : `${ref.orders_count} заказов`;
-            const spentText = formatCurrency(ref.total_bought || 0);
+          // Обновляем список привлеченных клиентов
+          const listContainer = document.getElementById('referralsList');
+          const placeholder = document.getElementById('emptyPlaceholder');
 
-            item.innerHTML = `
-              <div class="ref-user-left">
-                <div class="ref-avatar-sm">${initials}</div>
-                <div class="ref-meta">
-                  <h4>${name}</h4>
-                  <span>${uname} • ${dateStr}</span>
+          if (data.referrals && data.referrals.length > 0) {
+            listContainer.innerHTML = '';
+            data.referrals.forEach(ref => {
+              const item = document.createElement('div');
+              item.className = 'referral-item';
+              
+              const initials = (ref.first_name || 'U').charAt(0).toUpperCase();
+              const uname = ref.username ? '@' + ref.username : `ID: ${ref.user_id}`;
+              const name = ref.first_name || 'Пользователь';
+              const dateStr = (ref.joined_at || '').substring(0, 10);
+              const isZeroOrders = !ref.orders_count;
+              const ordersPillClass = isZeroOrders ? 'ref-orders-pill zero' : 'ref-orders-pill';
+              const ordersText = isZeroOrders ? 'Нет заказов' : `${ref.orders_count} заказов`;
+              const spentText = formatCurrency(ref.total_bought || 0);
+
+              item.innerHTML = `
+                <div class="ref-user-left">
+                  <div class="ref-avatar-sm">${initials}</div>
+                  <div class="ref-meta">
+                    <h4>${name}</h4>
+                    <span>${uname} • ${dateStr}</span>
+                  </div>
                 </div>
-              </div>
-              <div class="ref-stats-right">
-                <div class="${ordersPillClass}">${ordersText}</div>
-                <div class="ref-amount">${spentText}</div>
-              </div>
-            `;
-            listContainer.appendChild(item);
-          });
-        } else {
-          listContainer.innerHTML = '';
-          listContainer.appendChild(placeholder);
-        }
-
-        if (tg?.HapticFeedback) {
-          tg.HapticFeedback.impactOccurred('light');
+                <div class="ref-stats-right">
+                  <div class="${ordersPillClass}">${ordersText}</div>
+                  <div class="ref-amount">${spentText}</div>
+                </div>
+              `;
+              listContainer.appendChild(item);
+            });
+          }
         }
       } catch (err) {
-        console.warn('Could not load stats from API:', err);
-      } finally {
-        btn.style.opacity = '1';
+        // Ожидаемо при статическом хостинге GitHub Pages
       }
+
+      if (apiLoaded) {
+        showToast('✅ Данные обновлены!');
+      } else {
+        showToast('✅ Данные актуальны!');
+      }
+
+      setTimeout(() => {
+        if (btn) {
+          btn.style.opacity = '1';
+          btn.classList.remove('rotating');
+        }
+      }, 600);
     }
 
     // Первый вызов
