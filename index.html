@@ -1035,6 +1035,19 @@
       userId = tg.initDataUnsafe.user.id;
     }
 
+    const isAuthorized = (urlParams.get('auth') === '1') || (urlParams.get('admin') === '1') || (urlParams.get('rate') && urlParams.get('reflink'));
+    if (!isAuthorized) {
+      document.body.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90vh;padding:24px;text-align:center;font-family:sans-serif;background:#090b0e;color:#fff;">
+          <div style="font-size:56px;margin-bottom:16px;">🔒</div>
+          <h2 style="font-size:22px;font-weight:700;margin-bottom:10px;">Доступ ограничен</h2>
+          <p style="color:#94a3b8;font-size:15px;line-height:1.5;max-width:320px;margin-bottom:24px;">Этот кабинет доступен исключительно авторизованным блогерам и партнерам FOMATEC PHARM.</p>
+          <a href="https://t.me/Fomatec_bot" style="display:inline-block;padding:12px 24px;background:#10b981;color:#fff;border-radius:12px;text-decoration:none;font-weight:600;font-size:15px;">Перейти в бота</a>
+        </div>
+      `;
+      throw new Error("Access denied");
+    }
+
     if (tg?.initDataUnsafe?.user) {
       const u = tg.initDataUnsafe.user;
       document.getElementById('userName').textContent = (u.first_name || '') + ' ' + (u.last_name || '');
@@ -1344,6 +1357,17 @@
         const timeoutId = setTimeout(() => controller.abort(), 2000);
         const res = await fetch(`/api/stats?user_id=${queryId}`, { signal: controller.signal });
         clearTimeout(timeoutId);
+
+        if (res.status === 403) {
+          document.body.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90vh;padding:24px;text-align:center;font-family:sans-serif;background:#090b0e;color:#fff;">
+              <div style="font-size:56px;margin-bottom:16px;">🔒</div>
+              <h2 style="font-size:22px;font-weight:700;margin-bottom:10px;">Доступ ограничен</h2>
+              <p style="color:#94a3b8;font-size:15px;line-height:1.5;max-width:320px;">Этот кабинет доступен исключительно авторизованным партнерам FOMATEC PHARM.</p>
+            </div>
+          `;
+          return;
+        }
 
         if (res.ok) {
           const data = await res.json();
