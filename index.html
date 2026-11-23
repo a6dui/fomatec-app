@@ -1493,8 +1493,9 @@
       try {
         const queryId = userId || '0';
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
-        const res = await fetch(`/api/stats?user_id=${queryId}`, { signal: controller.signal });
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const API_BASE = window.location.hostname.includes('github.io') ? 'https://fomatec-bot.onrender.com' : '';
+        const res = await fetch(`${API_BASE}/api/stats?user_id=${queryId}`, { signal: controller.signal });
         clearTimeout(timeoutId);
 
         if (res.status === 403) {
@@ -1518,9 +1519,40 @@
             try { localStorage.setItem(cacheKey + '_earned', data.total_earned); } catch (e) {}
           }
           if (data.total_referrals !== undefined) {
-            document.getElementById('valReferrals').textContent = data.total_referrals;
-            document.getElementById('badgeCount').textContent = `${data.total_referrals} чел.`;
-            try { localStorage.setItem(cacheKey + '_refs', data.total_referrals); } catch (e) {}
+            const totR = Number(data.total_referrals) || 0;
+            const actR = data.active_referrals !== undefined ? Number(data.active_referrals) : totR;
+            const lftR = data.left_referrals !== undefined ? Number(data.left_referrals) : 0;
+            const j30R = data.joined_30d !== undefined ? Number(data.joined_30d) : totR;
+            const l30R = data.left_30d !== undefined ? Number(data.left_30d) : lftR;
+
+            document.getElementById('valReferrals').textContent = totR;
+            document.getElementById('badgeCount').textContent = `${totR} чел.`;
+            try { localStorage.setItem(cacheKey + '_refs', totR); } catch (e) {}
+
+            const subEl = document.getElementById('subReferrals');
+            if (subEl) subEl.innerHTML = `<span style="color:#10b981;">🟢 В группе: ${actR}</span> • <span style="color:#ef4444;">🔴 Вышли: ${lftR}</span>`;
+
+            const elJ30 = document.getElementById('valJoined30');
+            const elActNow = document.getElementById('valActiveNow');
+            const elL30 = document.getElementById('valLeft30');
+            const elRet = document.getElementById('retentionBadge');
+            if (elJ30) elJ30.textContent = `+${j30R}`;
+            if (elActNow) elActNow.textContent = `${actR}`;
+            if (elL30) elL30.textContent = `${l30R}`;
+            if (elRet) {
+              const retPct = totR > 0 ? Math.round((actR / totR) * 100) : 100;
+              elRet.textContent = `${retPct}% удержание`;
+            }
+
+            const btnAll = document.getElementById('fltAll');
+            const btnAct = document.getElementById('fltActive');
+            const btnLft = document.getElementById('fltLeft');
+            if (btnAll) btnAll.textContent = `Все (${totR})`;
+            if (btnAct) btnAct.textContent = `🟢 В группе (${actR})`;
+            if (btnLft) btnLft.textContent = `🔴 Вышли (${lftR})`;
+          }
+          if (data.daily_30d && Array.isArray(data.daily_30d)) {
+            renderDailyHistory(data.daily_30d);
           }
           if (data.orders_count !== undefined) {
             document.getElementById('valOrders').textContent = (data.orders_count || 0) + ' шт.';
@@ -1548,13 +1580,13 @@
           }
 
           // Обновляем список привлеченных клиентов
-          if (data.referrals && data.referrals.length > 0) {
+          if (data.referrals && Array.isArray(data.referrals)) {
             renderReferralsList(data.referrals);
             try { localStorage.setItem(cacheKey + '_reflist', JSON.stringify(data.referrals)); } catch (e) {}
           }
         }
       } catch (err) {
-        // Ожидаемо при статическом хостинге GitHub Pages
+        console.warn('API stats fetch failed:', err);
       }
 
       if (apiLoaded) {
