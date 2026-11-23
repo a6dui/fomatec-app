@@ -990,11 +990,42 @@
       </div>
     </div>
 
+    <!-- 30-Day Join / Leave Analytics Section -->
+    <div class="referrals-box" style="margin-bottom: 16px;">
+      <div class="section-title" style="margin-bottom: 12px;">
+        <span>📈 Заходы и выходы (за 30 дней)</span>
+        <span class="badge-count" id="retentionBadge">100% в группе</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:12px;text-align:center;">
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">🟢 Зашло (30 дн.)</div>
+          <div style="font-size:20px;font-weight:800;color:#10b981;" id="valJoined30">+0</div>
+        </div>
+        <div style="background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.25);border-radius:12px;padding:12px;text-align:center;">
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">👥 Сейчас в группе</div>
+          <div style="font-size:20px;font-weight:800;color:#06b6d4;" id="valActiveNow">0</div>
+        </div>
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:12px;text-align:center;">
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">🔴 Вышло (30 дн.)</div>
+          <div style="font-size:20px;font-weight:800;color:#ef4444;" id="valLeft30">0</div>
+        </div>
+      </div>
+      <div id="dailyHistoryBox" style="display:none;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
+        <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:8px;">📅 По дням (последние 30 дней):</div>
+        <div id="dailyHistoryList" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+    </div>
+
     <!-- Referral Customers Section -->
     <div class="referrals-box">
-      <div class="section-title" style="margin-bottom: 0;">
+      <div class="section-title" style="margin-bottom: 10px;">
         <span>👥 Привлеченные клиенты</span>
         <span class="badge-count" id="badgeCount">0 чел.</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button id="fltAll" onclick="setRefFilter('all')" style="flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.15);color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Все</button>
+        <button id="fltActive" onclick="setRefFilter('active')" style="flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;">🟢 В группе</button>
+        <button id="fltLeft" onclick="setRefFilter('left')" style="flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;">🔴 Вышли</button>
       </div>
 
       <div class="referrals-list" id="referralsList">
@@ -1087,14 +1118,66 @@
     const refLinkEl = document.getElementById('refLinkText');
     if (refLinkEl) refLinkEl.textContent = currentRefLink;
 
+    let allReferralsData = [];
+    let currentRefFilter = 'all';
+
+    function setRefFilter(flt) {
+      currentRefFilter = flt;
+      const btnAll = document.getElementById('fltAll');
+      const btnAct = document.getElementById('fltActive');
+      const btnLft = document.getElementById('fltLeft');
+      const activeStyle = 'flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.15);color:#fff;font-size:12px;font-weight:600;cursor:pointer;';
+      const idleStyle = 'flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;';
+      if (btnAll) btnAll.style.cssText = flt === 'all' ? activeStyle : idleStyle;
+      if (btnAct) btnAct.style.cssText = flt === 'active' ? activeStyle : idleStyle;
+      if (btnLft) btnLft.style.cssText = flt === 'left' ? activeStyle : idleStyle;
+      renderReferralsList(allReferralsData);
+    }
+
+    function renderDailyHistory(dailyArr) {
+      const box = document.getElementById('dailyHistoryBox');
+      const list = document.getElementById('dailyHistoryList');
+      if (!box || !list) return;
+      if (!dailyArr || !Array.isArray(dailyArr) || dailyArr.length === 0) {
+        box.style.display = 'none';
+        return;
+      }
+      box.style.display = 'block';
+      list.innerHTML = '';
+      dailyArr.forEach(item => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.03);font-size:12px;';
+        const dParts = String(item.d || '').split('-');
+        const dFormatted = dParts.length === 2 ? `${dParts[1]}.${dParts[0]}` : item.d;
+        row.innerHTML = `
+          <span style="color:#cbd5e1;font-weight:600;">📆 ${dFormatted}</span>
+          <div style="display:flex;gap:12px;">
+            <span style="color:#10b981;font-weight:700;">🟢 Зашло: +${item.j || 0}</span>
+            <span style="color:#ef4444;font-weight:700;">🔴 Вышло: ${item.l || 0}</span>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
     function renderReferralsList(referrals) {
+      if (referrals && Array.isArray(referrals)) {
+        allReferralsData = referrals;
+      }
       const listContainer = document.getElementById('referralsList');
       const placeholder = document.getElementById('emptyPlaceholder');
       if (!listContainer) return;
 
-      if (referrals && referrals.length > 0) {
+      const filtered = (allReferralsData || []).filter(ref => {
+        const isActive = (ref.active !== undefined ? ref.active : (ref.is_active !== undefined ? ref.is_active : 1)) !== 0;
+        if (currentRefFilter === 'active') return isActive;
+        if (currentRefFilter === 'left') return !isActive;
+        return true;
+      });
+
+      if (filtered.length > 0) {
         listContainer.innerHTML = '';
-        referrals.forEach(ref => {
+        filtered.forEach(ref => {
           const item = document.createElement('div');
           item.className = 'referral-item';
           
@@ -1102,6 +1185,7 @@
           const uname = (ref.uname || ref.username) ? '@' + (ref.uname || ref.username).replace(/^@/, '') : `ID: ${ref.user_id || ''}`;
           const name = ref.name || ref.first_name || 'Клиент';
           const dateStr = (ref.date || ref.joined_at || '').substring(0, 10);
+          const leftDateStr = (ref.ld || ref.left_at || '').substring(0, 10);
           const ordersCount = ref.orders !== undefined ? ref.orders : (ref.orders_count || 0);
           const isZeroOrders = !ordersCount;
           const ordersPillClass = isZeroOrders ? 'ref-orders-pill zero' : 'ref-orders-pill';
@@ -1109,15 +1193,15 @@
           const spentText = formatCurrency(ref.spent !== undefined ? ref.spent : (ref.total_bought || 0));
           const isActive = (ref.active !== undefined ? ref.active : (ref.is_active !== undefined ? ref.is_active : 1)) !== 0;
           const statusBadge = isActive
-            ? '<span style="color:#10b981;font-weight:600;">• В группе</span>'
-            : '<span style="color:#ef4444;font-weight:600;">• Вышел</span>';
+            ? '<span style="color:#10b981;font-weight:600;">• 🟢 В группе</span>'
+            : `<span style="color:#ef4444;font-weight:600;">• 🔴 Вышел${leftDateStr ? ' (' + leftDateStr + ')' : ''}</span>`;
 
           item.innerHTML = `
             <div class="ref-user-left">
               <div class="ref-avatar-sm">${initials}</div>
               <div class="ref-meta">
                 <h4>${name}</h4>
-                <span>${uname} • ${dateStr} ${statusBadge}</span>
+                <span>${uname} • Зашел: ${dateStr} ${statusBadge}</span>
               </div>
             </div>
             <div class="ref-stats-right">
@@ -1181,11 +1265,44 @@
 
     const pActiveRefs = urlParams.get('active_refs');
     const pLeftRefs = urlParams.get('left_refs');
-    if (pActiveRefs !== null || pLeftRefs !== null) {
-      const actVal = pActiveRefs !== null ? pActiveRefs : (pRefs || '0');
-      const leftVal = pLeftRefs !== null ? pLeftRefs : '0';
-      const subEl = document.getElementById('subReferrals');
-      if (subEl) subEl.innerHTML = `<span style="color:#10b981;">🟢 В группе: ${actVal}</span> • <span style="color:#ef4444;">🔴 Вышли: ${leftVal}</span>`;
+    const pJ30 = urlParams.get('j30');
+    const pL30 = urlParams.get('l30');
+    const pDaily = urlParams.get('daily');
+
+    const totalValNum = parseInt(pRefs || localStorage.getItem(cacheKey + '_refs') || '0', 10) || 0;
+    const actValNum = pActiveRefs !== null ? (parseInt(pActiveRefs, 10) || 0) : totalValNum;
+    const leftValNum = pLeftRefs !== null ? (parseInt(pLeftRefs, 10) || 0) : 0;
+    const j30Num = pJ30 !== null ? (parseInt(pJ30, 10) || 0) : totalValNum;
+    const l30Num = pL30 !== null ? (parseInt(pL30, 10) || 0) : leftValNum;
+
+    const subEl = document.getElementById('subReferrals');
+    if (subEl) subEl.innerHTML = `<span style="color:#10b981;">🟢 В группе: ${actValNum}</span> • <span style="color:#ef4444;">🔴 Вышли: ${leftValNum}</span>`;
+
+    const elJ30 = document.getElementById('valJoined30');
+    const elActNow = document.getElementById('valActiveNow');
+    const elL30 = document.getElementById('valLeft30');
+    const elRet = document.getElementById('retentionBadge');
+    if (elJ30) elJ30.textContent = `+${j30Num}`;
+    if (elActNow) elActNow.textContent = `${actValNum}`;
+    if (elL30) elL30.textContent = `${l30Num}`;
+    if (elRet) {
+      const retPct = totalValNum > 0 ? Math.round((actValNum / totalValNum) * 100) : 100;
+      elRet.textContent = `${retPct}% удержание`;
+    }
+
+    const btnAll = document.getElementById('fltAll');
+    const btnAct = document.getElementById('fltActive');
+    const btnLft = document.getElementById('fltLeft');
+    if (btnAll) btnAll.textContent = `Все (${totalValNum})`;
+    if (btnAct) btnAct.textContent = `🟢 В группе (${actValNum})`;
+    if (btnLft) btnLft.textContent = `🔴 Вышли (${leftValNum})`;
+
+    if (pDaily) {
+      try {
+        let dArr = null;
+        try { dArr = JSON.parse(pDaily); } catch (e1) { dArr = JSON.parse(decodeURIComponent(pDaily)); }
+        renderDailyHistory(dArr);
+      } catch (e) {}
     }
 
     if (pOrders !== null) {
