@@ -976,7 +976,7 @@
           <div class="metric-icon icon-cyan">👥</div>
         </div>
         <div class="metric-value" id="valReferrals">0</div>
-        <div class="metric-sub">Переходов по вашей рефке</div>
+        <div class="metric-sub" id="subReferrals">Переходов по вашей рефке</div>
       </div>
 
       <!-- Purchases Count Card -->
@@ -1107,13 +1107,17 @@
           const ordersPillClass = isZeroOrders ? 'ref-orders-pill zero' : 'ref-orders-pill';
           const ordersText = isZeroOrders ? 'Нет заказов' : `${ordersCount} заказов`;
           const spentText = formatCurrency(ref.spent !== undefined ? ref.spent : (ref.total_bought || 0));
+          const isActive = (ref.active !== undefined ? ref.active : (ref.is_active !== undefined ? ref.is_active : 1)) !== 0;
+          const statusBadge = isActive
+            ? '<span style="color:#10b981;font-weight:600;">• В группе</span>'
+            : '<span style="color:#ef4444;font-weight:600;">• Вышел</span>';
 
           item.innerHTML = `
             <div class="ref-user-left">
               <div class="ref-avatar-sm">${initials}</div>
               <div class="ref-meta">
                 <h4>${name}</h4>
-                <span>${uname} • ${dateStr}</span>
+                <span>${uname} • ${dateStr} ${statusBadge}</span>
               </div>
             </div>
             <div class="ref-stats-right">
@@ -1164,6 +1168,15 @@
           document.getElementById('badgeCount').textContent = cRefs + ' чел.';
         }
       } catch (e) {}
+    }
+
+    const pActiveRefs = urlParams.get('active_refs');
+    const pLeftRefs = urlParams.get('left_refs');
+    if (pActiveRefs !== null || pLeftRefs !== null) {
+      const actVal = pActiveRefs !== null ? pActiveRefs : (pRefs || '0');
+      const leftVal = pLeftRefs !== null ? pLeftRefs : '0';
+      const subEl = document.getElementById('subReferrals');
+      if (subEl) subEl.innerHTML = `<span style="color:#10b981;">🟢 В группе: ${actVal}</span> • <span style="color:#ef4444;">🔴 Вышли: ${leftVal}</span>`;
     }
 
     if (pOrders !== null) {
