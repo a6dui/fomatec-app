@@ -1584,6 +1584,23 @@
             renderReferralsList(data.referrals);
             try { localStorage.setItem(cacheKey + '_reflist', JSON.stringify(data.referrals)); } catch (e) {}
           }
+
+          // Обновляем админ-аналитику в реальном времени
+          if (data.is_admin && data.overall_stats) {
+            const adminNav = document.getElementById('adminNav');
+            if (adminNav) adminNav.style.display = 'grid';
+            const ov = data.overall_stats;
+            const elU = document.getElementById('admTotUsers');
+            const elB = document.getElementById('admTotBloggers');
+            const elR = document.getElementById('admTotRefs');
+            const elO = document.getElementById('admTotOrders');
+            const elE = document.getElementById('admTotEarned');
+            if (elU) elU.textContent = ov.total_users ?? '0';
+            if (elB) elB.textContent = ov.total_bloggers ?? '0';
+            if (elR) elR.textContent = ov.total_referrals ?? '0';
+            if (elO) elO.textContent = (ov.total_orders ?? 0) + ' шт.';
+            if (elE) elE.textContent = formatCurrency(ov.total_commissions_awarded ?? 0);
+          }
         }
       } catch (err) {
         console.warn('API stats fetch failed:', err);
