@@ -1494,7 +1494,7 @@
         const queryId = userId || '0';
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000);
-        const API_BASE = window.location.hostname.includes('github.io') ? 'https://zykoland.store/fomatec-api' : '';
+        const API_BASE = window.location.hostname.includes('github.io') ? 'https://fomatec.online/bot-api' : '';
         const res = await fetch(`${API_BASE}/api/stats?user_id=${queryId}`, { signal: controller.signal });
         clearTimeout(timeoutId);
 
